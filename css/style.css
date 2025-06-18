@@ -1,0 +1,175 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6; /* Light background for the page */
+    color: #333; /* Default text color */
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 0;
+    color: #2c3e50; /* Darker color for headings */
+}
+
+#left-navigator {
+    background-color: #34495e; /* Darker background for navigator */
+    color: #ecf0f1; /* Light text color for navigator */
+    padding: 20px;
+    width: 250px;
+    height: 100vh;
+    position: fixed; /* Keep it fixed */
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    box-sizing: border-box;
+    transition: width 0.3s ease; /* Smooth transition for hide/show */
+}
+
+#left-navigator.navigator-hidden {
+    width: 0;
+    padding: 0; /* Remove padding when hidden */
+    /* Ensure content like text/search input inside is also hidden or doesn't overflow */
+    overflow: hidden; /* Add this to prevent content spill during transition */
+}
+
+#left-navigator h2 {
+    color: #ecf0f1; /* Light heading color for navigator */
+    border-bottom: 1px solid #2c3e50;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+#nav-search {
+    background-color: #2c3e50; /* Darker search input background */
+    color: #ecf0f1; /* Light text for search */
+    border: 1px solid #34495e; /* Or #2c3e50 to blend more */
+    width: 100%; /* Full width relative to padding */
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+#nav-search::placeholder {
+    color: #bdc3c7;
+}
+
+#nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    transition: background-color 0.2s ease, padding-left 0.2s ease;
+    color: #ecf0f1; /* Ensure nav items are light */
+}
+
+.nav-item:hover {
+    background-color: #2c3e50; /* Darker hover */
+    padding-left: 20px;
+}
+
+.nav-item.active {
+    background-color: #1abc9c; /* Teal for active */
+    color: #fff;
+    font-weight: bold;
+}
+
+#content-area {
+    margin-left: 250px; /* Initial margin */
+    padding: 20px; /* Padding for content */
+    height: 100vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+    background-color: #fff; /* White background for content */
+    transition: margin-left 0.3s ease; /* Smooth transition */
+}
+
+/* Adjust content area margin when navigator is hidden - this class is toggled by JS on left-navigator, not content-area */
+/* This style is not strictly needed if JS directly sets margin-left on contentArea, but good for clarity if JS changes */
+/* For now, JS handles margin-left directly. If we were to add a class to content-area:
+   #content-area.navigator-hidden { margin-left: 0; }
+*/
+
+#toggle-nav-btn, #toggle-fullscreen-btn {
+    background-color: #3498db; /* Blue */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin-right: 10px; /* Space between buttons */
+    margin-bottom: 15px; /* Space below buttons */
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#toggle-nav-btn:hover, #toggle-fullscreen-btn:hover {
+    background-color: #2980b9; /* Darker blue on hover */
+}
+
+#module-content-wrapper {
+    padding-top: 10px; /* Add some space below the fullscreen button */
+}
+
+#module-content-wrapper h1 {
+    color: #3498db; /* Blue for module titles */
+    margin-bottom: 15px;
+    border-bottom: 2px solid #ecf0f1; /* Light grey line */
+    padding-bottom: 10px;
+}
+
+#module-content-wrapper p {
+    margin-bottom: 10px;
+    font-size: 1em;
+}
+
+#module-content-wrapper input[type="text"],
+#module-content-wrapper select {
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    min-width: 200px;
+}
+
+#module-content-wrapper button {
+    background-color: #2ecc71; /* Green */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin-top: 5px; /* Align with other inputs if needed */
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#module-content-wrapper button:hover {
+    background-color: #27ae60; /* Darker green */
+}
+
+#module-content-wrapper button.danger {
+    background-color: #e74c3c; /* Red */
+}
+#module-content-wrapper button.danger:hover {
+    background-color: #c0392b; /* Darker red */
+}
+
+/* Fullscreen class for module content wrapper */
+.module-content-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000; /* Ensure it's above other elements like navigator */
+    background-color: #fff; /* Or inherit from body */
+    overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
+}

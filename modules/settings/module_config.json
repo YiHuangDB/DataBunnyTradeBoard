@@ -1,0 +1,5 @@
+{
+  "name": "Settings",
+  "html_file": "settings_content.html",
+  "js_file": "settings_script.js"
+}

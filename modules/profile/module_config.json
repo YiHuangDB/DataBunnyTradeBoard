@@ -1,0 +1,5 @@
+{
+  "name": "User Profile",
+  "html_file": "profile_content.html",
+  "js_file": "profile_script.js"
+}
