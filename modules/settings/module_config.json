@@ -2,7 +2,7 @@
   "name": "Settings",
   "html_file": "settings_content.html",
   "js_file": "settings_script.js",
-  "categoryId": "cat_admin",
-  "subcategoryId": "subcat_system_settings",
-  "orderInCategory": 1
+  "categoryId": "cat_demo",
+  "subcategoryId": null,
+  "orderInCategory": 3
 }

@@ -2,6 +2,7 @@
   "name": "Dashboard",
   "html_file": "dashboard_content.html",
   "js_file": "dashboard_script.js",
-  "categoryId": "cat_general",
+  "categoryId": "cat_demo",
+  "subcategoryId": null,
   "orderInCategory": 1
 }

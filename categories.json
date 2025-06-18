@@ -9,6 +9,11 @@
       "id": "cat_admin",
       "name": "Administration",
       "order": 2
+    },
+    {
+      "id": "cat_demo",
+      "name": "Demo Modules",
+      "order": 3
     }
   ],
   "subcategories": [
