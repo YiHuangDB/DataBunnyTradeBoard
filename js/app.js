@@ -332,35 +332,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Let's find or create a specific container for module content.
         // A follow-up would be to refine index.html to have a dedicated content wrapper.
     // UPDATE: The wrapper 'module-content-wrapper' has been added to index.html.
+    // moduleContentWrapper is defined in the outer DOMContentLoaded scope and is accessible here.
+    // No need to redefine: const moduleWrapper = document.getElementById('module-content-wrapper');
 
-    const moduleWrapper = document.getElementById('module-content-wrapper');
-    if (!moduleWrapper) {
+    if (!moduleContentWrapper) { // Check if it was found during initial DOMContentLoaded setup
         console.error("Critical error: The 'module-content-wrapper' element is missing from index.html.");
-        // Fallback to contentArea, but this means the button might be overwritten if not handled
-        // For safety, just display an error in contentArea itself.
-        contentArea.innerHTML = "<p>Application error: UI structure incomplete (missing module-content-wrapper).</p>";
+        // If it's missing, there's nowhere to put content or errors.
+        // The initial check for moduleContentWrapper at the top of DOMContentLoaded might be better.
+        // For now, this check guards its use.
         return;
     }
 
-        const htmlFile = listItem.dataset.htmlFile;
-        const jsFile = listItem.dataset.jsFile;
+        const htmlFileName = listItem.dataset.htmlFile;
+        const jsFileName = listItem.dataset.jsFile;
         const moduleId = listItem.dataset.moduleId;
 
-        if (!htmlFile) {
+        if (!htmlFileName) {
             console.error('No HTML file specified for this module:', moduleId);
-        moduleWrapper.innerHTML = '<p>Error: Module content not found.</p>';
+            moduleContentWrapper.innerHTML = '<p>Error: Module content not found.</p>';
             return;
         }
 
         try {
-            // Fetch HTML content
-            const response = await fetch(htmlFile);
+            const fullHtmlPath = `modules/${moduleId}/${htmlFileName}`;
+            const response = await fetch(fullHtmlPath);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status} for ${htmlFile}`);
+                throw new Error(`HTTP error! status: ${response.status} for ${fullHtmlPath}`);
             }
             const htmlContent = await response.text();
-
-        moduleWrapper.innerHTML = htmlContent;
+            moduleContentWrapper.innerHTML = htmlContent;
 
             // Remove any previously loaded module-specific script to avoid conflicts/re-executions
             const oldScript = document.getElementById('module-script');
@@ -369,16 +369,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             // Load and execute module-specific JavaScript if it exists
-            if (jsFile) {
+            if (jsFileName) {
+                const fullJsPath = `modules/${moduleId}/${jsFileName}`;
                 const script = document.createElement('script');
                 script.id = 'module-script'; // Add an ID to make it findable for removal
-                script.src = jsFile;
+                script.src = fullJsPath;
                 script.defer = true; // defer execution until HTML is parsed
                 document.body.appendChild(script); // Append to body to ensure execution
             }
         } catch (error) {
             console.error('Error loading module content:', error);
-        moduleWrapper.innerHTML = `<p>Error loading module: ${moduleId}. Check console for details.</p>`;
+            moduleContentWrapper.innerHTML = `<p>Error loading module: ${moduleId}. Check console for details.</p>`;
         }
     });
 
