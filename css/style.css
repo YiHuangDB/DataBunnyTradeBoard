@@ -173,3 +173,59 @@ h1, h2, h3, h4, h5, h6 {
     padding: 20px;
     box-sizing: border-box;
 }
+
+/* New Styles for Categorized Navigator */
+
+.nav-category {
+    margin-bottom: 10px; /* Space between categories */
+}
+
+.nav-category-header {
+    font-weight: bold;
+    color: #ecf0f1; /* Light color for category headers in dark nav */
+    padding: 8px 10px;
+    background-color: #2c3e50; /* Slightly different background for emphasis */
+    border-radius: 3px;
+    margin-bottom: 5px;
+    /* Add cursor: pointer if making them clickable for collapse/expand */
+    /* cursor: pointer; */
+}
+
+.nav-subcategory {
+    margin-left: 15px; /* Indent subcategories */
+    margin-bottom: 8px; /* Space between subcategories */
+}
+
+.nav-subcategory-header {
+    font-weight: normal; /* Less emphasis than category */
+    color: #bdc3c7; /* Slightly dimmer color for subcategory headers */
+    padding: 6px 8px;
+    background-color: #34495e; /* Same as nav background or slightly lighter/darker */
+    border-radius: 3px;
+    margin-bottom: 5px;
+    /* cursor: pointer; */
+}
+
+.nav-category > .nav-module-list { /* Direct module list under a category */
+    padding-left: 10px; /* Indent modules under category header slightly */
+    list-style: none; /* Ensure no bullets */
+    margin: 0; /* Reset margin for nested UL */
+}
+
+.nav-subcategory > .nav-module-list { /* Module list under a subcategory */
+    padding-left: 15px; /* Further indent modules under subcategory header */
+    list-style: none; /* Ensure no bullets */
+    margin: 0; /* Reset margin for nested UL */
+}
+
+/* Optional Caret Styling (if carets were added to HTML) */
+/*
+.caret {
+    float: right;
+    transition: transform 0.3s ease;
+}
+
+.collapsed .caret {
+    transform: rotate(-90deg);
+}
+*/

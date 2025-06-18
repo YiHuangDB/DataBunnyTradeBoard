@@ -1,5 +1,7 @@
 {
   "name": "Dashboard",
   "html_file": "dashboard_content.html",
-  "js_file": "dashboard_script.js"
+  "js_file": "dashboard_script.js",
+  "categoryId": "cat_general",
+  "orderInCategory": 1
 }

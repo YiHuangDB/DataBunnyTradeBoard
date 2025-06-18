@@ -1,4 +1,9 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Define categories and subcategories here to be in scope for functions
+    let categories = [];
+    let subcategories = [];
+
+    // DOM Element references
     const leftNavigator = document.getElementById('left-navigator');
     const contentArea = document.getElementById('content-area');
     const toggleNavBtn = document.getElementById('toggle-nav-btn');
@@ -26,67 +31,223 @@ document.addEventListener('DOMContentLoaded', () => {
         "modules/profile/module_config.json" // Add this line
     ];
 
+    async function fetchCategoryData() {
+        try {
+            const response = await fetch('categories.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status} while fetching categories.json`);
+            }
+            const data = await response.json();
+            // Assign to the outer scope variables
+            categories = data.categories || [];
+            subcategories = data.subcategories || [];
+            // console.log('Categories loaded:', categories);
+            // console.log('Subcategories loaded:', subcategories);
+        } catch (error) {
+            console.error('Error fetching category data:', error);
+            // Fallback to empty arrays
+            categories = [];
+            subcategories = [];
+        }
+    }
+
     async function fetchModuleConfig(configPath) {
         try {
             const response = await fetch(configPath);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status} for ${configPath}`);
+                // console.error(`Failed to fetch module config: ${configPath}`, response.status); // Keep original error for more detail
+                throw new Error(`HTTP error! status: ${response.status} while fetching ${configPath}`);
             }
-            return await response.json();
+            const moduleData = await response.json();
+            moduleData.path = configPath; // Store original path
+            // e.g., configPath = "modules/dashboard/module_config.json"
+            // pathParts will be ["modules", "dashboard", "module_config.json"]
+            // moduleData.id will be "dashboard"
+            const pathParts = configPath.split('/');
+            moduleData.id = pathParts.length > 1 ? pathParts[pathParts.length - 2] : moduleData.name.toLowerCase().replace(/\s+/g, '-');
+            return moduleData;
         } catch (error) {
-            console.error(`Failed to fetch module config ${configPath}:`, error);
-            return null; // Return null or a specific error object if a module fails to load
+            // console.error(`Error processing module config ${configPath}:`, error); // Keep original error
+            // The original console.error was more generic, let's stick to that or make this more specific.
+            console.error(`Failed to fetch or process module config ${configPath}:`, error);
+            return null;
         }
     }
 
-    async function loadNavigatorItems() {
+    async function loadNavigatorItems() { // Make it async if it wasn't already, to fetch module configs
+        const navList = document.getElementById('nav-list');
         if (!navList) {
-            console.error("Error: 'nav-list' element not found.");
+            console.error('Navigation list element (#nav-list) not found.');
             return;
         }
         navList.innerHTML = ''; // Clear existing items
 
-        const modulePromises = moduleConfigs.map(fetchModuleConfig);
+        // 1. Sort categories and subcategories (if not already sorted during fetch)
+        // Assuming 'categories' and 'subcategories' are accessible from the outer scope
+        categories.sort((a, b) => (a.order || 0) - (b.order || 0));
+        subcategories.sort((a, b) => (a.order || 0) - (b.order || 0));
 
+        // 2. Fetch all module configurations
+        let rawModuleConfigs = [];
+        // Note: fetchModuleConfig is already designed to be used with map and Promise.all
+        // moduleConfigs is the array of paths defined at the top of DOMContentLoaded
         try {
-            const modules = await Promise.all(modulePromises);
-            modules.forEach((module, index) => {
-                if (module && module.name) { // Check if module loaded successfully and has a name
-                    const li = document.createElement('li');
-                    li.textContent = module.name;
-                    li.classList.add('nav-item'); // For styling
+            const responses = await Promise.all(moduleConfigs.map(configPath => fetchModuleConfig(configPath)));
+            rawModuleConfigs = responses.filter(mc => mc); // Filter out any nulls from failed fetches
+        } catch (error) {
+            console.error("Error fetching one or more module configurations:", error);
+            // Decide how to handle this - perhaps render what we have, or show an error
+        }
 
-                    // Extract module ID (directory name) from config path for uniqueness
-                    const configPath = moduleConfigs[index];
-                    const pathParts = configPath.split('/');
-                    const moduleId = pathParts.length > 1 ? pathParts[pathParts.length - 2] : `module-${index}`;
+        // 3. Sort modules by their orderInCategory
+        rawModuleConfigs.sort((a, b) => (a.orderInCategory || 0) - (b.orderInCategory || 0));
 
-                    li.setAttribute('data-module-id', moduleId);
-                    // Construct full paths for html and js files relative to root
-                    li.setAttribute('data-html-file', `modules/${moduleId}/${module.html_file}`);
-                    li.setAttribute('data-js-file', `modules/${moduleId}/${module.js_file}`);
+        // 4. Group modules by category and subcategory for easier lookup
+        const modulesByCategory = {}; // { categoryId: [module, module] }
+        const modulesBySubCategory = {}; // { subcategoryId: [module, module] }
 
-                    navList.appendChild(li);
+        rawModuleConfigs.forEach(module => {
+            if (module.subcategoryId) {
+                if (!modulesBySubCategory[module.subcategoryId]) modulesBySubCategory[module.subcategoryId] = [];
+                modulesBySubCategory[module.subcategoryId].push(module);
+            } else if (module.categoryId) {
+                if (!modulesByCategory[module.categoryId]) modulesByCategory[module.categoryId] = [];
+                modulesByCategory[module.categoryId].push(module);
+            }
+            // TODO: Handle modules without any categoryId (put them in a default "Uncategorized" group later)
+        });
+
+
+        // 5. Render categories, subcategories, and their modules
+        categories.forEach(category => {
+            const categoryLi = document.createElement('li');
+            categoryLi.classList.add('nav-category');
+
+            const categoryHeader = document.createElement('div');
+            categoryHeader.classList.add('nav-category-header');
+            categoryHeader.textContent = category.name;
+            // Add a caret for collapsibility if desired (e.g., an <i> or <span> element)
+            // categoryHeader.innerHTML = `${category.name} <span class="caret">&#9662;</span>`; // Example caret
+            categoryLi.appendChild(categoryHeader);
+
+            const categoryModuleListUl = document.createElement('ul');
+            categoryModuleListUl.classList.add('nav-module-list', 'category-modules');
+            // categoryModuleListUl.style.display = 'none'; // Start collapsed if implementing collapsibility
+
+            // Render modules directly under this category
+            (modulesByCategory[category.id] || []).forEach(module => {
+                const moduleLi = createModuleListItem(module);
+                categoryModuleListUl.appendChild(moduleLi);
+            });
+
+            // Render subcategories and their modules
+            subcategories.filter(sc => sc.parentCategoryId === category.id).forEach(subcategory => {
+                const subCategoryLi = document.createElement('li');
+                subCategoryLi.classList.add('nav-subcategory');
+
+                const subCategoryHeader = document.createElement('div');
+                subCategoryHeader.classList.add('nav-subcategory-header');
+                subCategoryHeader.textContent = subcategory.name;
+                // subCategoryHeader.innerHTML = `${subcategory.name} <span class="caret">&#9662;</span>`;
+                subCategoryLi.appendChild(subCategoryHeader);
+
+                const subCategoryModuleListUl = document.createElement('ul');
+                subCategoryModuleListUl.classList.add('nav-module-list', 'subcategory-modules');
+                // subCategoryModuleListUl.style.display = 'none'; // Start collapsed
+
+                (modulesBySubCategory[subcategory.id] || []).forEach(module => {
+                    const moduleLi = createModuleListItem(module);
+                    subCategoryModuleListUl.appendChild(moduleLi);
+                });
+
+                if (subCategoryModuleListUl.hasChildNodes()) {
+                    subCategoryLi.appendChild(subCategoryModuleListUl);
+                    categoryModuleListUl.appendChild(subCategoryLi); // Append subcategory LI to category's UL
                 }
             });
-        } catch (error) {
-            // This catch might not be strictly necessary if fetchModuleConfig handles its own errors and returns null
-            console.error("Error loading one or more module configurations:", error);
-        }
+
+            if (categoryModuleListUl.hasChildNodes()) {
+                categoryLi.appendChild(categoryModuleListUl);
+            }
+            // Only append the category if it has modules or subcategories with modules
+            if (categoryLi.querySelector('.nav-item')) { // Check if any module item was eventually added
+                 navList.appendChild(categoryLi);
+            }
+        });
+
+        // TODO: Handle uncategorized modules by appending them at the end.
     }
 
-    loadNavigatorItems();
+    // Helper function to create module list items (refactored from previous version)
+    function createModuleListItem(module) {
+        const li = document.createElement('li');
+        li.classList.add('nav-item'); // Existing class for styling and click handling
+        li.textContent = module.name;
+        // module.id is now provided by the updated fetchModuleConfig
+        li.dataset.moduleId = module.id || module.name.toLowerCase().replace(/\s+/g, '-');
+        li.dataset.htmlFile = module.html_file;
+        li.dataset.jsFile = module.js_file;
+
+        return li;
+    }
+
+    // Initial loading sequence
+    await fetchCategoryData(); // Wait for categories to load first
+    loadNavigatorItems();      // This function will be modified later to use the loaded category data
 
     navSearchInput.addEventListener('input', () => {
-        const searchTerm = navSearchInput.value.toLowerCase();
-        const navItems = document.querySelectorAll('#nav-list .nav-item');
+        const searchTerm = navSearchInput.value.toLowerCase().trim();
+        const allNavItems = navList.querySelectorAll('.nav-item');
+        const allSubCategoryLis = navList.querySelectorAll('.nav-subcategory');
+        const allCategoryLis = navList.querySelectorAll('.nav-category');
 
-        navItems.forEach(item => {
+        // If search term is empty, show everything and exit
+        if (searchTerm === "") {
+            allNavItems.forEach(item => item.style.display = '');
+            allSubCategoryLis.forEach(item => item.style.display = '');
+            allCategoryLis.forEach(item => item.style.display = '');
+            // If using collapsibility, ensure they are reset to default collapsed/expanded state
+            return;
+        }
+
+        // 1. Filter individual module items (.nav-item)
+        allNavItems.forEach(item => {
             const itemName = item.textContent.toLowerCase();
             if (itemName.includes(searchTerm)) {
-                item.style.display = ''; // Show item
+                item.style.display = '';
             } else {
-                item.style.display = 'none'; // Hide item
+                item.style.display = 'none';
+            }
+        });
+
+        // 2. Update visibility of subcategory LIs (.nav-subcategory)
+        allSubCategoryLis.forEach(subCategoryLi => {
+            const subCategoryHeader = subCategoryLi.querySelector('.nav-subcategory-header');
+            const subCategoryName = subCategoryHeader ? subCategoryHeader.textContent.toLowerCase() : '';
+
+            // Check if any child .nav-item within this subcategory is visible
+            const visibleChildItem = subCategoryLi.querySelector('.nav-item:not([style*="display: none"])');
+
+            if (visibleChildItem || subCategoryName.includes(searchTerm)) {
+                subCategoryLi.style.display = '';
+            } else {
+                subCategoryLi.style.display = 'none';
+            }
+        });
+
+        // 3. Update visibility of category LIs (.nav-category)
+        allCategoryLis.forEach(categoryLi => {
+            const categoryHeader = categoryLi.querySelector('.nav-category-header');
+            const categoryName = categoryHeader ? categoryHeader.textContent.toLowerCase() : '';
+
+            // Check if any child .nav-item OR .nav-subcategory (that hasn't been hidden) is visible
+            const visibleChildModule = categoryLi.querySelector('.nav-module-list > .nav-item:not([style*="display: none"])');
+            const visibleChildSubCategory = categoryLi.querySelector('.nav-module-list > .nav-subcategory:not([style*="display: none"])');
+
+            if (visibleChildModule || visibleChildSubCategory || categoryName.includes(searchTerm)) {
+                categoryLi.style.display = '';
+            } else {
+                categoryLi.style.display = 'none';
             }
         });
     });

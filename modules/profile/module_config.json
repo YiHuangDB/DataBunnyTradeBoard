@@ -1,5 +1,8 @@
 {
   "name": "User Profile",
   "html_file": "profile_content.html",
-  "js_file": "profile_script.js"
+  "js_file": "profile_script.js",
+  "categoryId": "cat_admin",
+  "subcategoryId": "subcat_user_management",
+  "orderInCategory": 1
 }

@@ -1,0 +1,28 @@
+{
+  "categories": [
+    {
+      "id": "cat_general",
+      "name": "General",
+      "order": 1
+    },
+    {
+      "id": "cat_admin",
+      "name": "Administration",
+      "order": 2
+    }
+  ],
+  "subcategories": [
+    {
+      "id": "subcat_user_management",
+      "name": "User Management",
+      "parentCategoryId": "cat_admin",
+      "order": 1
+    },
+    {
+      "id": "subcat_system_settings",
+      "name": "System Settings",
+      "parentCategoryId": "cat_admin",
+      "order": 2
+    }
+  ]
+}
