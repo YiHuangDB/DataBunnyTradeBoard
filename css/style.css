@@ -298,22 +298,15 @@ h1, h2, h3, h4, h5, h6 {
     margin: 8px 0;
     padding: 6px;
 }
-
-/* Styles for Fully Hidden Navigator (width: 0) */
-#left-navigator.navigator-fully-hidden {
-    width: 0px !important;
-    padding: 0 !important; /* Remove all padding */
-    overflow: hidden !important;
-    border-right: none !important; /* Remove border if any */
-}
-/* Note: .main-nav-content and #nav-controls will be hidden by overflow on parent */
+/* Note: .main-nav-content and #nav-controls will be hidden by overflow on parent for .navigator-collapsed */
+/* .navigator-fully-hidden and .module-content-fullscreen.nav-is-fully-hidden rules are now removed. */
 
 
 /* Adjust fullscreen content wrapper for collapsed navigator */
 .module-content-fullscreen {
     position: fixed;
     top: 0;
-    left: 50px; /* Default: Make space for minimal navigator */
+    left: 50px; /* Default: Make space for minimal (collapsed) navigator */
     width: calc(100vw - 50px); /* Default: Adjust width for collapsed nav */
     height: 100vh;
     z-index: 1000;
@@ -324,17 +317,15 @@ h1, h2, h3, h4, h5, h6 {
     transition: left 0.3s ease, width 0.3s ease;
 }
 
-/* When navigator is fully hidden (width:0), fullscreen content takes all space */
-.module-content-fullscreen.nav-is-fully-hidden { /* This class name is kept */
-    left: 0px !important;
-    width: 100vw !important;
-}
-
-/* Remove old .navigator-hidden specific styling if it's now fully replaced by .navigator-fully-hidden
-   or if .navigator-collapsed serves the 50px state.
-   The previous #left-navigator.navigator-hidden was for width:0. This is now .navigator-fully-hidden.
-   The state that was previously toggled by toggleNavBtn to make nav 0px is now more nuanced.
-   If #left-navigator.navigator-hidden is no longer used by JS, its CSS can be removed.
-   Assuming JS will now use .navigator-collapsed and .navigator-fully-hidden.
+/*
+   The .module-content-fullscreen.nav-is-fully-hidden rule is removed as the navigator
+   will no longer be fully hidden (0px) when in fullscreen mode. It will always be 50px.
 */
-/* Old #left-navigator.navigator-hidden rules removed or merged into .navigator-fully-hidden */
+
+/*
+   Old #left-navigator.navigator-hidden rules (that made it 0px) are removed.
+   The class .navigator-collapsed now defines the 50px state.
+   There is no 0px state for left-navigator directly managed by a class anymore,
+   as toggleNavButton is inactive in fullscreen, and in non-fullscreen, it only toggles
+   between full width and collapsed (50px).
+*/
