@@ -5,9 +5,12 @@ const ICONS = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Define categories and subcategories here to be in scope for functions
-    let categories = [];
-    let subcategories = [];
+    // Holds navigator configuration like title, categories, subcategories
+    let navigatorConfig = {
+        title: "Modules", // Default title, will be updated from modules.json
+        categories: [],
+        subcategories: []
+    };
 
     // DOM Element references
     const leftNavigator = document.getElementById('left-navigator');
@@ -61,23 +64,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         "modules/profile/module_config.json" // Add this line
     ];
 
-    async function fetchCategoryData() {
+    async function fetchNavigatorConfig() { // Renamed function
         try {
-            const response = await fetch('categories.json');
+            const response = await fetch('modules.json'); // Renamed file
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status} while fetching categories.json`);
+                throw new Error(`HTTP error! status: ${response.status} while fetching modules.json`);
             }
             const data = await response.json();
-            // Assign to the outer scope variables
-            categories = data.categories || [];
-            subcategories = data.subcategories || [];
-            // console.log('Categories loaded:', categories);
-            // console.log('Subcategories loaded:', subcategories);
+            navigatorConfig.categories = data.categories || [];
+            navigatorConfig.subcategories = data.subcategories || [];
+            if (data.navigatorTitle) { // Support for navigatorTitle if present
+                 navigatorConfig.title = data.navigatorTitle;
+            }
+            // console.log('Navigator config loaded:', navigatorConfig);
         } catch (error) {
-            console.error('Error fetching category data:', error);
-            // Fallback to empty arrays
-            categories = [];
-            subcategories = [];
+            console.error('Error fetching navigator config data (modules.json):', error);
+            // navigatorConfig will retain its default values
         }
     }
 
@@ -112,10 +114,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         navList.innerHTML = ''; // Clear existing items
 
-        // 1. Sort categories and subcategories (if not already sorted during fetch)
-        // Assuming 'categories' and 'subcategories' are accessible from the outer scope
-        categories.sort((a, b) => (a.order || 0) - (b.order || 0));
-        subcategories.sort((a, b) => (a.order || 0) - (b.order || 0));
+        // 1. Sort categories and subcategories using navigatorConfig
+        navigatorConfig.categories.sort((a, b) => (a.order || 0) - (b.order || 0));
+        navigatorConfig.subcategories.sort((a, b) => (a.order || 0) - (b.order || 0));
 
         // 2. Fetch all module configurations
         let rawModuleConfigs = [];
@@ -149,7 +150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
         // 5. Render categories, subcategories, and their modules
-        categories.forEach(category => {
+        navigatorConfig.categories.forEach(category => { // Use navigatorConfig
             const categoryLi = document.createElement('li');
             categoryLi.classList.add('nav-category');
 
@@ -171,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             // Render subcategories and their modules
-            subcategories.filter(sc => sc.parentCategoryId === category.id).forEach(subcategory => {
+            navigatorConfig.subcategories.filter(sc => sc.parentCategoryId === category.id).forEach(subcategory => { // Use navigatorConfig
                 const subCategoryLi = document.createElement('li');
                 subCategoryLi.classList.add('nav-subcategory');
 
@@ -222,8 +223,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Initial loading sequence
-    await fetchCategoryData(); // Wait for categories to load first
-    loadNavigatorItems();      // This function will be modified later to use the loaded category data
+    await fetchNavigatorConfig(); // Call renamed function
+
+    // Get reference to the title heading element
+    const navigatorTitleHeading = document.getElementById('navigator-title-heading');
+
+    // Set the navigator title dynamically
+    if (navigatorTitleHeading) {
+        if (navigatorConfig.title) {
+            navigatorTitleHeading.textContent = navigatorConfig.title;
+        } else {
+            // This case should ideally not be reached if navigatorConfig is initialized with a default title
+            navigatorTitleHeading.textContent = "Modules";
+            console.warn("Navigator title not found or empty in config, using default 'Modules'.");
+        }
+    } else {
+        console.error("Element with ID 'navigator-title-heading' not found.");
+    }
+
+    loadNavigatorItems();
 
     navSearchInput.addEventListener('input', () => {
         const searchTerm = navSearchInput.value.toLowerCase().trim();

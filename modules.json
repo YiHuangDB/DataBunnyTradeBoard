@@ -1,4 +1,5 @@
 {
+  "navigatorTitle": "App Modules", // Changed title for better distinction
   "categories": [
     {
       "id": "cat_general",
