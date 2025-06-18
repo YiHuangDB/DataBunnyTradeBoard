@@ -8,15 +8,20 @@
 </head>
 <body>
     <div id="left-navigator">
+    <div class="main-nav-content"> <!-- New wrapper for collapsible content -->
         <h2>Modules</h2>
         <input type="text" id="nav-search" placeholder="Search modules...">
         <ul id="nav-list">
             <!-- Navigator items will be loaded here -->
         </ul>
     </div>
+    <div id="nav-controls"> <!-- New wrapper for controls -->
+        <button id="toggle-nav-btn" title="Toggle Navigator"></button>
+        <button id="toggle-fullscreen-btn" title="Toggle Fullscreen"></button>
+    </div>
+    </div>
     <div id="content-area">
-        <button id="toggle-nav-btn">Hide Nav</button>
-        <button id="toggle-fullscreen-btn">Fullscreen</button> <!-- New button -->
+    <!-- Buttons removed from here -->
         <div id="module-content-wrapper">
             <!-- Module HTML content will be loaded here -->
         </div>

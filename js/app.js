@@ -1,3 +1,9 @@
+const ICONS = {
+    MENU: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>',
+    FULLSCREEN_ENTER: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
+    FULLSCREEN_EXIT: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>'
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Define categories and subcategories here to be in scope for functions
     let categories = [];
@@ -12,16 +18,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     const toggleFullscreenButton = document.getElementById('toggle-fullscreen-btn');
     const moduleContentWrapper = document.getElementById('module-content-wrapper'); // Added this line
 
-    const navWidth = leftNavigator.offsetWidth + "px";
+    const navWidth = leftNavigator.offsetWidth + "px"; // Used by toggleNavBtn
+
+    // Set initial icons for buttons
+    if (toggleNavBtn) {
+        toggleNavBtn.innerHTML = ICONS.MENU;
+        toggleNavBtn.title = "Hide Navigator"; // Initial title
+    }
+    if (toggleFullscreenButton) {
+        toggleFullscreenButton.innerHTML = ICONS.FULLSCREEN_ENTER;
+        toggleFullscreenButton.title = "Enter Fullscreen";
+    }
+
+    const initialLeftNavWidthPx = leftNavigator.offsetWidth + 'px'; // Store initial full width for non-fullscreen mode
 
     toggleNavBtn.addEventListener('click', () => {
-        leftNavigator.classList.toggle('navigator-hidden');
-        if (leftNavigator.classList.contains('navigator-hidden')) {
-            contentArea.style.marginLeft = '0';
-            toggleNavBtn.textContent = 'Show Nav';
+        const isHidden = leftNavigator.classList.toggle('navigator-hidden');
+        toggleNavBtn.title = isHidden ? "Show Navigator" : "Hide Navigator";
+
+        if (moduleContentWrapper.classList.contains('module-content-fullscreen')) {
+            // Fullscreen mode: toggle class on content wrapper for full width
+            if (isHidden) {
+                moduleContentWrapper.classList.add('nav-is-fully-hidden');
+            } else {
+                moduleContentWrapper.classList.remove('nav-is-fully-hidden');
+            }
         } else {
-            contentArea.style.marginLeft = navWidth;
-            toggleNavBtn.textContent = 'Hide Nav';
+            // Not in fullscreen mode: adjust contentArea margin
+            contentArea.style.marginLeft = isHidden ? '0' : initialLeftNavWidthPx;
         }
     });
 
@@ -358,30 +382,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    if (toggleFullscreenButton && moduleContentWrapper && leftNavigator && toggleNavBtn && contentArea) {
+    // Updated condition: toggleNavBtn's direct display style is not changed by this listener anymore.
+    if (toggleFullscreenButton && moduleContentWrapper && leftNavigator && contentArea) {
         toggleFullscreenButton.addEventListener('click', () => {
             moduleContentWrapper.classList.toggle('module-content-fullscreen');
 
             if (moduleContentWrapper.classList.contains('module-content-fullscreen')) {
                 // Entering fullscreen
-                leftNavigator.style.display = 'none';
-                toggleNavBtn.style.display = 'none'; // Hide the nav toggle button
-                toggleFullscreenButton.textContent = 'Exit Fullscreen';
-                contentArea.style.overflow = 'hidden'; // Hide original #content-area scrollbar
+                leftNavigator.classList.remove('navigator-hidden');
+                leftNavigator.classList.add('navigator-minimal-fullscreen');
+
+                toggleFullscreenButton.innerHTML = ICONS.FULLSCREEN_EXIT;
+                toggleFullscreenButton.title = "Exit Fullscreen";
+
+                // If nav was hidden by its own toggle, content should take full space
+                if (leftNavigator.classList.contains('navigator-hidden')) {
+                     moduleContentWrapper.classList.add('nav-is-fully-hidden');
+                } else {
+                     moduleContentWrapper.classList.remove('nav-is-fully-hidden');
+                }
+                // contentArea.style.overflow = 'hidden'; // Handled by CSS .module-content-fullscreen
+
             } else {
                 // Exiting fullscreen
-                // Only show navigator if it wasn't hidden by its own toggle
-                if (!leftNavigator.classList.contains('navigator-hidden')) {
-                    leftNavigator.style.display = '';
+                leftNavigator.classList.remove('navigator-minimal-fullscreen');
+                moduleContentWrapper.classList.remove('nav-is-fully-hidden');
+
+                toggleFullscreenButton.innerHTML = ICONS.FULLSCREEN_ENTER;
+                toggleFullscreenButton.title = "Enter Fullscreen";
+
+                // Restore contentArea margin based on current navigator visibility state
+                if (leftNavigator.classList.contains('navigator-hidden')) {
+                    contentArea.style.marginLeft = '0';
+                } else {
+                    contentArea.style.marginLeft = initialLeftNavWidthPx; // Use the stored initial width
                 }
-                toggleNavBtn.style.display = ''; // Show the nav toggle button
-                toggleFullscreenButton.textContent = 'Fullscreen';
-                contentArea.style.overflow = 'auto'; // Restore content-area scrollbar
+                // contentArea.style.overflow = 'auto'; // Handled by CSS when .module-content-fullscreen is removed
             }
         });
     } else {
+        // Update console error for checked elements
         console.error("One or more elements for fullscreen toggle are missing:", {
-            toggleFullscreenButton, moduleContentWrapper, leftNavigator, toggleNavBtn, contentArea
+            toggleFullscreenButton, moduleContentWrapper, leftNavigator, contentArea
         });
     }
 });

@@ -23,7 +23,7 @@ h1, h2, h3, h4, h5, h6 {
     left: 0;
     overflow-y: auto;
     box-sizing: border-box;
-    transition: width 0.3s ease; /* Smooth transition for hide/show */
+    transition: width 0.3s ease, padding-left 0.3s ease, padding-right 0.3s ease; /* Added padding transitions */
 }
 
 #left-navigator.navigator-hidden {
@@ -229,3 +229,102 @@ h1, h2, h3, h4, h5, h6 {
     transform: rotate(-90deg);
 }
 */
+
+/* Styles for Nav Controls at the bottom of the navigator */
+#nav-controls {
+    position: absolute; /* Position relative to left-navigator */
+    bottom: 0;          /* At the bottom, changed from 10px to 0 for full attachment */
+    left: 0;
+    width: 100%;
+    padding: 10px;      /* Padding inside the control bar */
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-around; /* Distribute buttons evenly */
+    background-color: #2c3e50; /* Match category headers or similar dark theme */
+    border-top: 1px solid #34495e; /* Separator line from list above */
+}
+
+#nav-controls button {
+    background-color: transparent; /* Remove default button background */
+    border: none;
+    color: #ecf0f1; /* SVG fill color - matches navigator text */
+    padding: 8px;    /* Adjust padding for icons */
+    cursor: pointer;
+    border-radius: 4px;
+    line-height: 0; /* Helps align SVGs if they have extra space */
+    /* flex-grow: 1; */ /* Removed flex-grow, using fixed or intrinsic size now */
+    margin: 0 5px; /* Spacing between buttons */
+    margin-bottom: 0; /* Override general button margin-bottom */
+    transition: background-color 0.2s ease, color 0.2s ease;
+    /* width: 40px; */ /* Example: explicit width for icon button */
+    /* height: 40px; */ /* Example: explicit height for icon button */
+}
+
+#nav-controls button:hover {
+    background-color: #34495e; /* Slightly darker background on hover */
+    color: #fff; /* Brighter icon on hover */
+}
+
+#nav-controls button svg {
+    width: 20px;  /* Control SVG size */
+    height: 20px; /* Control SVG size */
+    display: block; /* Removes extra space below inline SVGs */
+    margin: auto; /* Center SVG if button padding is larger than SVG */
+}
+
+/* Styles for Minimal Navigator in Fullscreen Mode */
+#left-navigator.navigator-minimal-fullscreen {
+    width: 50px !important; /* Width of the minimal navigator, !important to override normal width */
+    background-color: #2c3e50;
+    padding: 10px 0; /* Minimal padding for controls */
+    overflow: hidden; /* Hide anything that might spill */
+}
+
+#left-navigator.navigator-minimal-fullscreen .main-nav-content {
+    display: none; /* Hide main navigation content (search, list) */
+}
+
+#left-navigator.navigator-minimal-fullscreen #nav-controls {
+    position: static; /* Override absolute positioning */
+    flex-direction: column; /* Stack icons vertically */
+    align-items: center; /* Center icons */
+    background-color: transparent;
+    border-top: none;
+    padding: 0;
+    width: 100%; /* Ensure it takes the new minimal width */
+}
+
+#left-navigator.navigator-minimal-fullscreen #nav-controls button {
+    margin: 8px 0; /* Adjust margin for vertical stacking */
+    padding: 6px; /* Slightly smaller padding for minimal buttons */
+}
+
+/* Adjust fullscreen content wrapper for minimal navigator */
+.module-content-fullscreen { /* Existing class, updated */
+    position: fixed;
+    top: 0;
+    left: 50px; /* Default: Make space for minimal navigator */
+    width: calc(100vw - 50px); /* Default: Adjust width */
+    height: 100vh;
+    z-index: 1000;
+    background-color: #fff;
+    overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: left 0.3s ease, width 0.3s ease; /* Smooth transition for content area */
+}
+
+/* When navigator is fully hidden (even in fullscreen), content takes all space */
+.module-content-fullscreen.nav-is-fully-hidden {
+    left: 0px !important;
+    width: 100vw !important;
+}
+
+/* Ensure .navigator-hidden completely hides the navigator */
+#left-navigator.navigator-hidden {
+    width: 0px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    overflow: hidden !important;
+    border-right: none !important; /* Example if it had a border */
+}
