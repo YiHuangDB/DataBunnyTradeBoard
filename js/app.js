@@ -30,22 +30,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         toggleFullscreenButton.title = "Enter Fullscreen";
     }
 
-    const initialLeftNavWidthPx = leftNavigator.offsetWidth + 'px'; // Store initial full width for non-fullscreen mode
+    const initialLeftNavWidthPx = leftNavigator.offsetWidth + 'px'; // Store initial full width
+    const COLLAPSED_NAV_WIDTH_PX = '50px'; // Define collapsed width
 
     toggleNavBtn.addEventListener('click', () => {
-        const isHidden = leftNavigator.classList.toggle('navigator-hidden');
-        toggleNavBtn.title = isHidden ? "Show Navigator" : "Hide Navigator";
-
         if (moduleContentWrapper.classList.contains('module-content-fullscreen')) {
-            // Fullscreen mode: toggle class on content wrapper for full width
-            if (isHidden) {
+            // In fullscreen: toggle the "truly hidden" state for the already minimal (collapsed) nav
+            const isNowFullyHidden = leftNavigator.classList.toggle('navigator-fully-hidden');
+            // Title could be more specific, e.g., "Show Controls" / "Hide Controls"
+            toggleNavBtn.title = isNowFullyHidden ? "Show Controls" : "Hide Controls";
+            if (isNowFullyHidden) {
                 moduleContentWrapper.classList.add('nav-is-fully-hidden');
             } else {
                 moduleContentWrapper.classList.remove('nav-is-fully-hidden');
             }
         } else {
-            // Not in fullscreen mode: adjust contentArea margin
-            contentArea.style.marginLeft = isHidden ? '0' : initialLeftNavWidthPx;
+            // Not in fullscreen: toggle the "collapsed" (50px) state
+            const isNowCollapsed = leftNavigator.classList.toggle('navigator-collapsed');
+            toggleNavBtn.title = isNowCollapsed ? "Expand Navigator" : "Collapse Navigator";
+            contentArea.style.marginLeft = isNowCollapsed ? COLLAPSED_NAV_WIDTH_PX : initialLeftNavWidthPx;
         }
     });
 
@@ -390,35 +393,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (moduleContentWrapper.classList.contains('module-content-fullscreen')) {
                 // Entering fullscreen
-                leftNavigator.classList.remove('navigator-hidden');
-                leftNavigator.classList.add('navigator-minimal-fullscreen');
+                leftNavigator.classList.remove('navigator-fully-hidden'); // Ensure not truly hidden
+                leftNavigator.classList.add('navigator-collapsed');    // Show as minimal 50px bar.
+                                                                    // This is the key visual change for the nav itself.
+
+                moduleContentWrapper.classList.remove('nav-is-fully-hidden'); // Ensure content makes space for minimal nav
 
                 toggleFullscreenButton.innerHTML = ICONS.FULLSCREEN_EXIT;
                 toggleFullscreenButton.title = "Exit Fullscreen";
 
-                // If nav was hidden by its own toggle, content should take full space
-                if (leftNavigator.classList.contains('navigator-hidden')) {
-                     moduleContentWrapper.classList.add('nav-is-fully-hidden');
-                } else {
-                     moduleContentWrapper.classList.remove('nav-is-fully-hidden');
-                }
-                // contentArea.style.overflow = 'hidden'; // Handled by CSS .module-content-fullscreen
+                // Adjust toggleNavBtn title for fullscreen context: it now controls hide/show of the minimal bar
+                toggleNavBtn.title = leftNavigator.classList.contains('navigator-fully-hidden') ? "Show Controls" : "Hide Controls";
 
             } else {
                 // Exiting fullscreen
-                leftNavigator.classList.remove('navigator-minimal-fullscreen');
+                // When exiting fullscreen, we want to restore the navigator to the state it would be in
+                // if it were not fullscreen. This means removing 'navigator-collapsed' if it was primarily there
+                // due to fullscreen, but keeping it if toggleNavBtn had set it.
+                // The simplest is to let toggleNavBtn's current state (collapsed or not) dictate layout.
+                leftNavigator.classList.remove('navigator-fully-hidden'); // Clean up just in case
+                // We don't necessarily remove 'navigator-collapsed' here because toggleNavBtn might be managing it.
+                // If 'navigator-collapsed' is present, contentArea margin will be set to 50px.
+                // If not, it will be set to initialLeftNavWidthPx. This is correct.
+
                 moduleContentWrapper.classList.remove('nav-is-fully-hidden');
 
                 toggleFullscreenButton.innerHTML = ICONS.FULLSCREEN_ENTER;
                 toggleFullscreenButton.title = "Enter Fullscreen";
 
-                // Restore contentArea margin based on current navigator visibility state
-                if (leftNavigator.classList.contains('navigator-hidden')) {
-                    contentArea.style.marginLeft = '0';
+                // Restore contentArea margin based on current 'navigator-collapsed' state
+                if (leftNavigator.classList.contains('navigator-collapsed')) {
+                    contentArea.style.marginLeft = COLLAPSED_NAV_WIDTH_PX;
                 } else {
-                    contentArea.style.marginLeft = initialLeftNavWidthPx; // Use the stored initial width
+                    contentArea.style.marginLeft = initialLeftNavWidthPx;
                 }
-                // contentArea.style.overflow = 'auto'; // Handled by CSS when .module-content-fullscreen is removed
+                // Adjust toggleNavBtn title for non-fullscreen context
+                toggleNavBtn.title = leftNavigator.classList.contains('navigator-collapsed') ? "Expand Navigator" : "Collapse Navigator";
             }
         });
     } else {
