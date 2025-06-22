@@ -8,7 +8,8 @@ const ICONS = {
 document.addEventListener('DOMContentLoaded', async () => {
     // Holds navigator configuration like title, categories, subcategories
     let navigatorConfig = {
-        title: "Modules", // Default title, will be updated from modules.json
+        title: "Modules",       // Default title
+        iconSVG: "",          // Default empty SVG string
         categories: [],
         subcategories: []
     };
@@ -73,15 +74,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(`HTTP error! status: ${response.status} while fetching modules.json`);
             }
             const data = await response.json();
+
+            navigatorConfig.title = data.navigatorTitle || "Modules"; // Use default if not present
+            navigatorConfig.iconSVG = data.navigatorIconSVG || "";   // Use empty string if not present
             navigatorConfig.categories = data.categories || [];
             navigatorConfig.subcategories = data.subcategories || [];
-            if (data.navigatorTitle) { // Support for navigatorTitle if present
-                 navigatorConfig.title = data.navigatorTitle;
-            }
+
             // console.log('Navigator config loaded:', navigatorConfig);
         } catch (error) {
             console.error('Error fetching navigator config data (modules.json):', error);
             // navigatorConfig will retain its default values
+            // (default title, empty iconSVG, empty categories/subcategories)
         }
     }
 
@@ -268,13 +271,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Set the navigator title dynamically
     if (navigatorTitleHeading) {
-        if (navigatorConfig.title) {
-            navigatorTitleHeading.textContent = navigatorConfig.title;
-        } else {
-            // This case should ideally not be reached if navigatorConfig is initialized with a default title
-            navigatorTitleHeading.textContent = "Modules";
-            console.warn("Navigator title not found or empty in config, using default 'Modules'.");
+        navigatorTitleHeading.innerHTML = ''; // Clear any existing content
+
+        // Add Icon (if available)
+        if (navigatorConfig.iconSVG && typeof navigatorConfig.iconSVG === 'string' && navigatorConfig.iconSVG.trim() !== '') {
+            const iconSpan = document.createElement('span');
+            iconSpan.innerHTML = navigatorConfig.iconSVG;
+            // The SVG string from modules.json should include class="navigator-title-icon"
+            navigatorTitleHeading.appendChild(iconSpan);
         }
+
+        // Add Title Text
+        const titleTextSpan = document.createElement('span');
+        titleTextSpan.textContent = navigatorConfig.title; // Default is already handled in fetchNavigatorConfig or navigatorConfig init
+        navigatorTitleHeading.appendChild(titleTextSpan);
+
     } else {
         console.error("Element with ID 'navigator-title-heading' not found.");
     }

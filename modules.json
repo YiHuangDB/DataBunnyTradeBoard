@@ -1,5 +1,6 @@
 {
   "navigatorTitle": "App Modules",
+  "navigatorIconSVG": "<svg class=\"navigator-title-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M4 4h6v6H4zm0 10h6v6H4zm10-10h6v6h-6zm0 10h6v6h-6z\"></path></svg>",
   "categories": [
     {
       "id": "cat_general",

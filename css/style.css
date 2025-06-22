@@ -369,3 +369,18 @@ h1, h2, h3, h4, h5, h6 {
     list-style: none;
     padding: 0;
 }
+
+/* Styles for Navigator Title Heading and Icon */
+#left-navigator .main-nav-content h2#navigator-title-heading {
+    display: flex;         /* Enable flexbox for alignment */
+    align-items: center;   /* Vertically align icon and text */
+    /* Existing styles for h2 (color, border-bottom, padding-bottom, margin-bottom) will be inherited or apply */
+}
+
+.navigator-title-icon { /* Class is directly on the SVG element */
+    width: 20px;          /* Or use '1em' to scale with font size */
+    height: 20px;         /* Or use '1em' */
+    margin-right: 8px;    /* Space between icon and text */
+    fill: currentColor;   /* Inherit color from parent h2 text color (which is #ecf0f1) */
+    flex-shrink: 0;       /* Prevent icon from shrinking if title text is long */
+}
