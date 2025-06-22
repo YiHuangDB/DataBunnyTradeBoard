@@ -301,6 +301,38 @@ h1, h2, h3, h4, h5, h6 {
 /* Note: .main-nav-content and #nav-controls will be hidden by overflow on parent for .navigator-collapsed */
 /* .navigator-fully-hidden and .module-content-fullscreen.nav-is-fully-hidden rules are now removed. */
 
+.nav-category-header {
+    /* existing styles: font-weight, color, padding, background-color, border-radius, margin-bottom */
+    cursor: pointer;
+    display: flex; /* To align caret and text */
+    align-items: center;
+    user-select: none; /* Prevent text selection on click */
+}
+
+.nav-category-caret {
+    margin-right: 8px; /* Space between caret and category name */
+    transition: transform 0.2s ease-in-out; /* Smooth rotation */
+    /* Default: points right (but JS adds .expanded by default, so it points down) */
+}
+
+.nav-category-caret.expanded {
+    transform: rotate(90deg); /* Points down when expanded */
+}
+
+/* Styling for the category name text if needed */
+.category-name-text {
+    flex-grow: 1; /* Allows text to take available space */
+}
+
+/* Hiding/showing the module list */
+.nav-category > ul.nav-module-list.collapsed {
+    display: none;
+}
+.nav-category > ul.nav-module-list { /* Default state */
+    display: block;
+    /* Keep existing padding-left styles for indentation */
+}
+
 
 /* Adjust fullscreen content wrapper for collapsed navigator */
 .module-content-fullscreen {
@@ -329,3 +361,11 @@ h1, h2, h3, h4, h5, h6 {
    as toggleNavButton is inactive in fullscreen, and in non-fullscreen, it only toggles
    between full width and collapsed (50px).
 */
+
+.nav-separator {
+    height: 1px;
+    background-color: #4a6076; /* A suitable color for the dark theme */
+    margin: 10px 15px;        /* Vertical margin, horizontal to align with nav-item content */
+    list-style: none;
+    padding: 0;
+}

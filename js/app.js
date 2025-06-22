@@ -1,7 +1,8 @@
 const ICONS = {
     MENU: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>',
     FULLSCREEN_ENTER: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
-    FULLSCREEN_EXIT: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>'
+    FULLSCREEN_EXIT: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>',
+    CARET_RIGHT: '<svg class="nav-category-caret" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M10 17l5-5-5-5v10z"/></svg>'
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -61,7 +62,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const moduleConfigs = [
         "modules/dashboard/module_config.json",
         "modules/settings/module_config.json",
-        "modules/profile/module_config.json" // Add this line
+        "modules/profile/module_config.json",
+        "modules/demo_separator_1/module_config.json" // Added separator
     ];
 
     async function fetchNavigatorConfig() { // Renamed function
@@ -156,9 +158,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const categoryHeader = document.createElement('div');
             categoryHeader.classList.add('nav-category-header');
-            categoryHeader.textContent = category.name;
-            // Add a caret for collapsibility if desired (e.g., an <i> or <span> element)
-            // categoryHeader.innerHTML = `${category.name} <span class="caret">&#9662;</span>`; // Example caret
+            // Prepend caret icon, then the name. Add 'expanded' class to caret by default.
+            categoryHeader.innerHTML = ICONS.CARET_RIGHT + `<span class="category-name-text">${category.name}</span>`;
+            const caretSvg = categoryHeader.querySelector('.nav-category-caret');
+            if (caretSvg) {
+                caretSvg.classList.add('expanded'); // Expanded by default
+            }
             categoryLi.appendChild(categoryHeader);
 
             const categoryModuleListUl = document.createElement('ul');
@@ -201,9 +206,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 categoryLi.appendChild(categoryModuleListUl);
             }
             // Only append the category if it has modules or subcategories with modules
-            if (categoryLi.querySelector('.nav-item')) { // Check if any module item was eventually added
-                 navList.appendChild(categoryLi);
+            // And add click listener for collapsibility
+            if (categoryModuleListUl.hasChildNodes()) { // Check if UL has children to be collapsible
+                categoryLi.appendChild(categoryModuleListUl);
+
+                const caretElement = categoryHeader.querySelector('.nav-category-caret');
+                // Default to expanded: add 'expanded' class to caret (already done during header creation)
+                // UL does not get 'collapsed' class by default, so it's visible
+
+                categoryHeader.addEventListener('click', () => {
+                    // Toggle 'collapsed' class on the UL (module list)
+                    categoryModuleListUl.classList.toggle('collapsed');
+
+                    // Toggle 'expanded' class on the caret SVG
+                    if (caretElement) {
+                        caretElement.classList.toggle('expanded');
+                    }
+                });
+                navList.appendChild(categoryLi); // Append the fully constructed category LI
             }
+            // If category has no modules/subcategories, it won't be added to navList based on previous logic.
+            // If we wanted to show empty categories, the logic here and above would need adjustment.
+            // Current logic: if categoryModuleListUl hasChildNodes is false, categoryLi (with only header) is not appended.
+            // The line `if (categoryLi.querySelector('.nav-item'))` was a bit redundant if this check is here.
+            // Let's stick to `if (categoryModuleListUl.hasChildNodes())` for appending and adding listener.
         });
 
         // TODO: Handle uncategorized modules by appending them at the end.
@@ -212,13 +238,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Helper function to create module list items (refactored from previous version)
     function createModuleListItem(module) {
         const li = document.createElement('li');
-        li.classList.add('nav-item'); // Existing class for styling and click handling
-        li.textContent = module.name;
-        // module.id is now provided by the updated fetchModuleConfig
-        li.dataset.moduleId = module.id || module.name.toLowerCase().replace(/\s+/g, '-');
-        li.dataset.htmlFile = module.html_file;
-        li.dataset.jsFile = module.js_file;
 
+        if (module.type === "separator") {
+            li.classList.add('nav-separator');
+            // The li itself will be styled as a line by CSS
+        } else {
+            // Logic for regular module items
+            li.classList.add('nav-item');
+            li.textContent = module.name || 'Unnamed Module'; // Fallback for name
+            // module.id is provided by fetchModuleConfig (derived from path)
+            li.dataset.moduleId = module.id || (module.name ? module.name.toLowerCase().replace(/\s+/g, '-') : `module-${Date.now()}`);
+
+            if (module.html_file) { // Separators won't have these
+                li.dataset.htmlFile = module.html_file;
+            }
+            if (module.js_file) { // Separators won't have these
+                li.dataset.jsFile = module.js_file;
+            }
+            // Click handling is done by the main navList listener checking for '.nav-item'
+        }
         return li;
     }
 
