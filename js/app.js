@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         title: "Modules",       // Default title
         iconSVG: "",          // Default empty SVG string
         categories: [],
-        subcategories: []
+        subcategories: [],
+        moduleDataMap: new Map() // New property
     };
 
     // DOM Element references
@@ -38,6 +39,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const initialLeftNavWidthPx = leftNavigator.offsetWidth + 'px'; // Store initial full width
     const COLLAPSED_NAV_WIDTH_PX = '50px'; // Define collapsed width
+
+    const FAVORITES_STORAGE_KEY = 'navigatorFavorites';
+
+    function getFavorites() {
+        const storedFavorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
+        if (storedFavorites) {
+            try {
+                const favArray = JSON.parse(storedFavorites);
+                return new Set(Array.isArray(favArray) ? favArray : []);
+            } catch (e) {
+                console.error("Error parsing favorites from localStorage:", e);
+                return new Set(); // Return empty set on error
+            }
+        }
+        return new Set(); // No favorites stored yet
+    }
+
+    function saveFavorites(favoritesSet) {
+        try {
+            localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(Array.from(favoritesSet)));
+        } catch (e) {
+            console.error("Error saving favorites to localStorage:", e);
+            // Handle potential storage full errors or other issues if necessary
+        }
+    }
+
+    function isFavorite(moduleId) {
+        const favorites = getFavorites();
+        return favorites.has(moduleId);
+    }
+
+    function toggleFavorite(moduleId) {
+        const favorites = getFavorites();
+        if (favorites.has(moduleId)) {
+            favorites.delete(moduleId);
+        } else {
+            favorites.add(moduleId);
+        }
+        saveFavorites(favorites);
+        return favorites.has(moduleId); // Return new state
+    }
 
     toggleNavBtn.addEventListener('click', () => {
         // If in fullscreen mode, this button should do nothing regarding navigator visibility.
@@ -102,8 +144,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             // pathParts will be ["modules", "dashboard", "module_config.json"]
             // moduleData.id will be "dashboard"
             const pathParts = configPath.split('/');
-            moduleData.id = pathParts.length > 1 ? pathParts[pathParts.length - 2] : moduleData.name.toLowerCase().replace(/\s+/g, '-');
-            return moduleData;
+            moduleData.id = pathParts.length > 1 ? pathParts[pathParts.length - 2] :
+                            (moduleData.name ? moduleData.name.toLowerCase().replace(/\s+/g, '-') : `module-${Date.now()}`);
+
+            // Store the fully processed moduleData object in the map
+            if (moduleData.id) { // Ensure an ID exists before setting
+                navigatorConfig.moduleDataMap.set(moduleData.id, moduleData);
+            } else {
+                console.warn(`Module from ${configPath} is missing a derivable ID.`);
+            }
+
+            return moduleData; // Return it for the Promise.all in loadNavigatorItems
         } catch (error) {
             // console.error(`Error processing module config ${configPath}:`, error); // Keep original error
             // The original console.error was more generic, let's stick to that or make this more specific.
@@ -273,14 +324,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             nameSpan.textContent = module.name || 'Unnamed Module';
             li.appendChild(nameSpan);
 
-            // Add Favorite Toggle Icon
+            // Add Favorite Toggle Icon & Set Initial State
             const favoriteToggleSpan = document.createElement('span');
             favoriteToggleSpan.classList.add('favorite-toggle-container');
-            favoriteToggleSpan.innerHTML = ICONS.STAR_ICON; // Default is outline star
+            favoriteToggleSpan.innerHTML = ICONS.STAR_ICON;
+
+            const moduleId = module.id; // module.id is guaranteed by fetchModuleConfig
+            if (moduleId && isFavorite(moduleId)) { // Check if favorite
+                favoriteToggleSpan.classList.add('is-favorite');
+            }
             li.appendChild(favoriteToggleSpan);
 
-            // Set data attributes
-            li.dataset.moduleId = module.id || (module.name ? module.name.toLowerCase().replace(/\s+/g, '-') : `module-${Date.now()}`);
+            // Set data attributes using the reliable module.id
+            li.dataset.moduleId = moduleId;
             if (module.html_file) {
                 li.dataset.htmlFile = module.html_file;
             }
@@ -384,124 +440,151 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (favoriteToggleContainer && navItemClicked) { // Check if the click is on a favorite icon within a nav item
             event.stopPropagation(); // Prevent the navItem click listener (module load)
 
-            // Toggle the visual state of the favorite icon
-            favoriteToggleContainer.classList.toggle('is-favorite');
-
-            // Get module ID if needed for future persistence
             const moduleId = navItemClicked.dataset.moduleId;
-            // if (favoriteToggleContainer.classList.contains('is-favorite')) {
-            //     console.log(`Module ${moduleId} marked as favorite (visual only).`);
-            // } else {
-            //     console.log(`Module ${moduleId} un-marked as favorite (visual only).`);
-            // }
+            if (moduleId) {
+                const nowFavorite = toggleFavorite(moduleId); // Update localStorage & get new state
+                if (nowFavorite) {
+                    favoriteToggleContainer.classList.add('is-favorite');
+                } else {
+                    favoriteToggleContainer.classList.remove('is-favorite');
+                }
+                renderCollapsedFavoritesBar(); // Update after toggling a favorite
+                // console.log(`Module ${moduleId} favorite status: ${nowFavorite}`);
+            }
             return; // Action handled, no further processing for this click.
         }
 
         // --- Existing module loading logic ---
         // If the click was not on a nav-item's interactive part (e.g., empty space in UL, or not on fav icon)
-        if (!navItemClicked) {
+        // or if it was on a separator.
+        if (!navItemClicked || navItemClicked.classList.contains('nav-separator')) {
             return;
         }
-        // If we reached here, it means a .nav-item was clicked but not its favorite icon.
-        // Proceed with module loading.
+        // If we reached here, it means a .nav-item (that's not a separator) was clicked
+        // but not its favorite icon. Proceed with module loading.
 
-        // Highlight active item
-        const currentActive = navList.querySelector('.nav-item.active');
-        if (currentActive) {
-            currentActive.classList.remove('active');
+        const moduleId = navItemClicked.dataset.moduleId;
+        if (moduleId) {
+            await displayModule(moduleId); // Call the new refactored function
         }
-        navItemClicked.classList.add('active');
+    });
 
-        // Clear existing content area's direct children, except the toggle button if it's inside
-        // A simpler approach for now is to just overwrite innerHTML, but be mindful if persistent elements are needed.
-        // For example, if the toggle button was part of contentArea's initial static content:
-        // Array.from(contentArea.children).forEach(child => {
-        // if (child.id !== 'toggle-nav-btn') { // Assuming toggle button is inside contentArea
-        // contentArea.removeChild(child);
-        // }
-        // });
-        // However, the toggle button is currently outside the part of contentArea that gets overwritten by module HTML.
-        // If the button were inside the module HTML, it would be replaced.
-        // The current index.html has <button id="toggle-nav-btn"> directly in content-area, then comments.
-        // So, direct innerHTML overwrite of contentArea is problematic if we want to keep the button.
+    // Updated condition: toggleNavBtn's direct display style is not changed by this listener anymore.
 
-        // Let's create a dedicated div for module content within content-area
-        // This requires an HTML change. For now, let's assume contentArea can be fully overwritten
-        // and the button is outside or we accept it gets removed if it was inside the loaded HTML.
-        // Given the current HTML, the button is a direct child of content-area.
-        // Overwriting contentArea.innerHTML will remove the button.
-        // To preserve the button, we need a sub-container for module content.
+    function renderCollapsedFavoritesBar() {
+        const favoritesListContainer = document.getElementById('minimal-nav-favorites-list');
+        if (!favoritesListContainer) {
+            console.error("Favorites list container #minimal-nav-favorites-list not found.");
+            return;
+        }
 
-        // Let's modify the logic to target a sub-container, or adjust where module HTML is injected.
-        // For now, the easiest path is to ensure the button is NOT part of the content loaded into contentArea.
-        // The current `index.html` has:
-        // <div id="content-area">
-        // <button id="toggle-nav-btn">Hide Nav</button>
-        // <!-- Main content will go here -->
-        // </div>
-        // So, if we set contentArea.innerHTML, the button is gone.
+        favoritesListContainer.innerHTML = ''; // Clear existing favorites
+        const favorites = getFavorites();
 
-        // Option 1: Create a dedicated sub-div in index.html for module content.
-        // <div id="content-area">
-        // <button id="toggle-nav-btn">Hide Nav</button>
-        // <div id="module-content-wrapper"></div>
-        // </div>
-        // And then: const moduleWrapper = document.getElementById('module-content-wrapper'); moduleWrapper.innerHTML = htmlContent;
+        if (favorites.size === 0) {
+            // favoritesListContainer.innerHTML = '<p class="no-favorites-message" style="font-size:10px; text-align:center; color:#bdc3c7;">No<br>favs</p>';
+            return; // Keep it empty if no favorites
+        }
 
-        // Option 2: Selectively clear contentArea.
-        // This is safer if we can't change index.html now.
-        // Let's find or create a specific container for module content.
-        // A follow-up would be to refine index.html to have a dedicated content wrapper.
-    // UPDATE: The wrapper 'module-content-wrapper' has been added to index.html.
-    // moduleContentWrapper is defined in the outer DOMContentLoaded scope and is accessible here.
+        favorites.forEach(moduleId => {
+            const moduleData = navigatorConfig.moduleDataMap.get(moduleId);
+            // Ensure module data and icon exist, and it's not a separator
+            if (moduleData && moduleData.type !== "separator" && moduleData.itemIconSVG) {
+                const favItem = document.createElement('button');
+                favItem.classList.add('minimal-fav-item');
+                favItem.dataset.moduleId = moduleId; // For potential click handling
+                favItem.title = moduleData.name || 'Favorite Item';
 
-    if (!moduleContentWrapper) {
-        console.error("Critical error: The 'module-content-wrapper' element is missing from index.html.");
-        return;
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = moduleData.itemIconSVG;
+                const svgElement = tempDiv.firstChild;
+
+                if (svgElement && svgElement.tagName === 'svg') {
+                    favItem.appendChild(svgElement);
+                } else {
+                    const fallbackText = document.createElement('span');
+                    fallbackText.textContent = (moduleData.name || 'F').substring(0,1);
+                    fallbackText.style.fontSize = '12px'; // Adjusted size
+                    favItem.appendChild(fallbackText);
+                }
+                favoritesListContainer.appendChild(favItem);
+            }
+        });
     }
 
-        // Use navItemClicked for data attributes from here on for module loading
-        const htmlFileName = navItemClicked.dataset.htmlFile;
-        const jsFileName = navItemClicked.dataset.jsFile;
-        const moduleId = navItemClicked.dataset.moduleId;
+    // Initial render of favorites bar
+    renderCollapsedFavoritesBar();
+
+    // New function to handle displaying a module
+    async function displayModule(moduleId) {
+        const moduleData = navigatorConfig.moduleDataMap.get(moduleId);
+
+        if (!moduleData || moduleData.type === 'separator') {
+            console.error(`Module data not found or is a separator for ID: ${moduleId}`);
+            if (moduleContentWrapper) { // moduleContentWrapper is from outer scope
+                moduleContentWrapper.innerHTML = `<p>Error: Module ${moduleId} cannot be displayed.</p>`;
+            }
+            return;
+        }
+
+        // 1. Update 'active' state in the main navigator list
+        // const navList = document.getElementById('nav-list'); // navList is from outer scope
+        if (navList) {
+            const currentActiveLi = navList.querySelector('.nav-item.active');
+            if (currentActiveLi) {
+                currentActiveLi.classList.remove('active');
+            }
+            const newActiveLi = navList.querySelector(`.nav-item[data-module-id="${moduleId}"]`);
+            if (newActiveLi) {
+                newActiveLi.classList.add('active');
+            }
+        }
+
+        // 2. Load and display HTML content & JS
+        const htmlFileName = moduleData.html_file;
+        const jsFileName = moduleData.js_file;
 
         if (!htmlFileName) {
             console.error('No HTML file specified for this module:', moduleId);
-            moduleContentWrapper.innerHTML = '<p>Error: Module content not found.</p>';
+            if (moduleContentWrapper) {
+                moduleContentWrapper.innerHTML = '<p>Error: Module content not found.</p>';
+            }
             return;
         }
 
         try {
-            const fullHtmlPath = `modules/${moduleId}/${htmlFileName}`;
+            const fullHtmlPath = `modules/${moduleId}/${htmlFileName}`; // moduleId is directory name
             const response = await fetch(fullHtmlPath);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status} for ${fullHtmlPath}`);
             }
             const htmlContent = await response.text();
-            moduleContentWrapper.innerHTML = htmlContent;
+            if (moduleContentWrapper) {
+                moduleContentWrapper.innerHTML = htmlContent;
+            }
 
-            // Remove any previously loaded module-specific script to avoid conflicts/re-executions
             const oldScript = document.getElementById('module-script');
             if (oldScript) {
                 oldScript.remove();
             }
 
-            // Load and execute module-specific JavaScript if it exists
             if (jsFileName) {
-                const fullJsPath = `modules/${moduleId}/${jsFileName}`;
+                const fullJsPath = `modules/${moduleId}/${jsFileName}`; // moduleId is directory name
                 const script = document.createElement('script');
-                script.id = 'module-script'; // Add an ID to make it findable for removal
+                script.id = 'module-script';
                 script.src = fullJsPath;
-                script.defer = true; // defer execution until HTML is parsed
-                document.body.appendChild(script); // Append to body to ensure execution
+                script.defer = true;
+                document.body.appendChild(script);
             }
         } catch (error) {
-            console.error('Error loading module content:', error);
-            moduleContentWrapper.innerHTML = `<p>Error loading module: ${moduleId}. Check console for details.</p>`;
+            console.error(`Error loading module content for ${moduleId}:`, error);
+            if (moduleContentWrapper) {
+                moduleContentWrapper.innerHTML = `<p>Error loading module: ${moduleId}. Check console for details.</p>`;
+            }
         }
-    });
+    }
 
-    // Updated condition: toggleNavBtn's direct display style is not changed by this listener anymore.
+
     if (toggleFullscreenButton && moduleContentWrapper && leftNavigator && contentArea) {
         toggleFullscreenButton.addEventListener('click', () => {
             moduleContentWrapper.classList.toggle('module-content-fullscreen');
@@ -551,6 +634,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Update console error for checked elements
         console.error("One or more elements for fullscreen toggle are missing:", {
             toggleFullscreenButton, moduleContentWrapper, leftNavigator, contentArea
+        });
+    }
+
+    const favoritesListContainer = document.getElementById('minimal-nav-favorites-list');
+    if (favoritesListContainer) {
+        favoritesListContainer.addEventListener('click', async (event) => {
+            const favItemClicked = event.target.closest('.minimal-fav-item');
+            if (favItemClicked) {
+                const moduleId = favItemClicked.dataset.moduleId;
+                if (moduleId) {
+                    await displayModule(moduleId);
+                    // Clicking a favorite in the minimal bar does not change the navigator's
+                    // collapsed/expanded state. It just loads the module.
+                }
+            }
         });
     }
 });

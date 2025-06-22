@@ -432,3 +432,49 @@ h1, h2, h3, h4, h5, h6 {
     fill: currentColor;   /* Inherit color from parent h2 text color (which is #ecf0f1) */
     flex-shrink: 0;       /* Prevent icon from shrinking if title text is long */
 }
+
+/* Styles for Collapsed Navigator Favorites List */
+#minimal-nav-favorites-list {
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0; /* Padding above and below the list of favorites */
+    /* Calculate max-height: viewport minus title, search, controls, and some padding.
+       Approx: 100vh - (h2_height + search_height + nav-controls_height + various_paddings_margins)
+       Let's use a simpler approx. 100vh - 200px as a starting point, can be tuned.
+       Assuming h2 (~40px), search (~40px), controls (~50px), plus margins/paddings.
+    */
+    max-height: calc(100vh - 180px); /* Adjust this value based on actual surrounding element heights */
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin; /* For Firefox */
+}
+
+#left-navigator.navigator-collapsed #minimal-nav-favorites-list {
+    display: flex; /* Visible when navigator is collapsed */
+}
+
+.minimal-fav-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;  /* Button-like size */
+    height: 40px; /* Button-like size */
+    margin: 5px 0; /* Vertical margin between favorite items */
+    padding: 5px;
+    box-sizing: border-box;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    color: #ecf0f1; /* Inherit text color for SVG if currentColor is used in SVG and no specific fill */
+}
+
+.minimal-fav-item:hover {
+    background-color: #34495e; /* Same as nav item hover */
+}
+
+.minimal-fav-item svg { /* Class on the SVG itemIcon itself is .nav-item-main-icon */
+    width: 20px;
+    height: 20px;
+    fill: currentColor; /* Inherits color from .minimal-fav-item text color */
+}
