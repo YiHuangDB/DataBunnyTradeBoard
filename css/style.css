@@ -465,12 +465,13 @@ h1, h2, h3, h4, h5, h6 {
     box-sizing: border-box;
     border-radius: 4px;
     cursor: pointer;
+    background-color: #34495e; /* New default background - was old hover */
     transition: background-color 0.2s ease;
-    color: #ecf0f1; /* Inherit text color for SVG if currentColor is used in SVG and no specific fill */
+    color: #ecf0f1; /* Ensure currentColor for SVG is light */
 }
 
 .minimal-fav-item:hover {
-    background-color: #34495e; /* Same as nav item hover */
+    background-color: #4a6076; /* New hover - slightly lighter/different */
 }
 
 .minimal-fav-item svg { /* Class on the SVG itemIcon itself is .nav-item-main-icon */
