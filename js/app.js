@@ -2,7 +2,8 @@ const ICONS = {
     MENU: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>',
     FULLSCREEN_ENTER: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
     FULLSCREEN_EXIT: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>',
-    CARET_RIGHT: '<svg class="nav-category-caret" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M10 17l5-5-5-5v10z"/></svg>'
+    CARET_RIGHT: '<svg class="nav-category-caret" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M10 17l5-5-5-5v10z"/></svg>',
+    STAR_ICON: '<svg class="nav-item-favorite-icon" viewBox="0 0 24 24"><path d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/></svg>'
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -244,21 +245,48 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (module.type === "separator") {
             li.classList.add('nav-separator');
-            // The li itself will be styled as a line by CSS
         } else {
-            // Logic for regular module items
             li.classList.add('nav-item');
-            li.textContent = module.name || 'Unnamed Module'; // Fallback for name
-            // module.id is provided by fetchModuleConfig (derived from path)
-            li.dataset.moduleId = module.id || (module.name ? module.name.toLowerCase().replace(/\s+/g, '-') : `module-${Date.now()}`);
+            li.innerHTML = ''; // Clear existing content
 
-            if (module.html_file) { // Separators won't have these
+            // Add Item Icon (if available)
+            if (module.itemIconSVG && typeof module.itemIconSVG === 'string' && module.itemIconSVG.trim() !== '') {
+                // Create a temporary div to parse the SVG string and get the SVG element
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = module.itemIconSVG; // This should yield an <svg> element as firstChild
+                const svgElement = tempDiv.firstChild;
+                if (svgElement && svgElement.tagName === 'svg') { // Check if it's an SVG element
+                    // The class "nav-item-main-icon" should be on the SVG root tag in the string
+                    li.appendChild(svgElement);
+                } else if (svgElement) { // Fallback if firstChild is not svg but exists (e.g. wrapped in another span from string)
+                    console.warn("Parsed itemIconSVG did not directly yield an SVG element for module:", module.name, "Got:", svgElement);
+                    // Try to find SVG inside
+                    const innerSvg = svgElement.querySelector && svgElement.querySelector('svg.nav-item-main-icon');
+                    if (innerSvg) li.appendChild(innerSvg);
+                    else li.appendChild(svgElement); // Append whatever was parsed if no specific SVG found
+                }
+            }
+
+            // Add Module Name
+            const nameSpan = document.createElement('span');
+            nameSpan.classList.add('nav-item-name');
+            nameSpan.textContent = module.name || 'Unnamed Module';
+            li.appendChild(nameSpan);
+
+            // Add Favorite Toggle Icon
+            const favoriteToggleSpan = document.createElement('span');
+            favoriteToggleSpan.classList.add('favorite-toggle-container');
+            favoriteToggleSpan.innerHTML = ICONS.STAR_ICON; // Default is outline star
+            li.appendChild(favoriteToggleSpan);
+
+            // Set data attributes
+            li.dataset.moduleId = module.id || (module.name ? module.name.toLowerCase().replace(/\s+/g, '-') : `module-${Date.now()}`);
+            if (module.html_file) {
                 li.dataset.htmlFile = module.html_file;
             }
-            if (module.js_file) { // Separators won't have these
+            if (module.js_file) {
                 li.dataset.jsFile = module.js_file;
             }
-            // Click handling is done by the main navList listener checking for '.nav-item'
         }
         return li;
     }
@@ -350,19 +378,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     navList.addEventListener('click', async (event) => {
-        const listItem = event.target.closest('.nav-item'); // Ensure we get the LI even if a child is clicked
+        const favoriteToggleContainer = event.target.closest('.favorite-toggle-container');
+        const navItemClicked = event.target.closest('.nav-item'); // This is the LI element
 
-        if (!listItem) {
-            return; // Click was not on a nav item
+        if (favoriteToggleContainer && navItemClicked) { // Check if the click is on a favorite icon within a nav item
+            event.stopPropagation(); // Prevent the navItem click listener (module load)
+
+            // Toggle the visual state of the favorite icon
+            favoriteToggleContainer.classList.toggle('is-favorite');
+
+            // Get module ID if needed for future persistence
+            const moduleId = navItemClicked.dataset.moduleId;
+            // if (favoriteToggleContainer.classList.contains('is-favorite')) {
+            //     console.log(`Module ${moduleId} marked as favorite (visual only).`);
+            // } else {
+            //     console.log(`Module ${moduleId} un-marked as favorite (visual only).`);
+            // }
+            return; // Action handled, no further processing for this click.
         }
 
-        // Remove .active class from previously active item
+        // --- Existing module loading logic ---
+        // If the click was not on a nav-item's interactive part (e.g., empty space in UL, or not on fav icon)
+        if (!navItemClicked) {
+            return;
+        }
+        // If we reached here, it means a .nav-item was clicked but not its favorite icon.
+        // Proceed with module loading.
+
+        // Highlight active item
         const currentActive = navList.querySelector('.nav-item.active');
         if (currentActive) {
             currentActive.classList.remove('active');
         }
-        // Add .active class to the clicked item
-        listItem.classList.add('active');
+        navItemClicked.classList.add('active');
 
         // Clear existing content area's direct children, except the toggle button if it's inside
         // A simpler approach for now is to just overwrite innerHTML, but be mindful if persistent elements are needed.
@@ -406,19 +454,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         // A follow-up would be to refine index.html to have a dedicated content wrapper.
     // UPDATE: The wrapper 'module-content-wrapper' has been added to index.html.
     // moduleContentWrapper is defined in the outer DOMContentLoaded scope and is accessible here.
-    // No need to redefine: const moduleWrapper = document.getElementById('module-content-wrapper');
 
-    if (!moduleContentWrapper) { // Check if it was found during initial DOMContentLoaded setup
+    if (!moduleContentWrapper) {
         console.error("Critical error: The 'module-content-wrapper' element is missing from index.html.");
-        // If it's missing, there's nowhere to put content or errors.
-        // The initial check for moduleContentWrapper at the top of DOMContentLoaded might be better.
-        // For now, this check guards its use.
         return;
     }
 
-        const htmlFileName = listItem.dataset.htmlFile;
-        const jsFileName = listItem.dataset.jsFile;
-        const moduleId = listItem.dataset.moduleId;
+        // Use navItemClicked for data attributes from here on for module loading
+        const htmlFileName = navItemClicked.dataset.htmlFile;
+        const jsFileName = navItemClicked.dataset.jsFile;
+        const moduleId = navItemClicked.dataset.moduleId;
 
         if (!htmlFileName) {
             console.error('No HTML file specified for this module:', moduleId);

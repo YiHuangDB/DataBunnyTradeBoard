@@ -370,6 +370,54 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0;
 }
 
+/* Updated Nav Item styles for flex layout with icon */
+.nav-item {
+    /* existing: padding, cursor, border-radius, margin-bottom, transition, color */
+    display: flex;
+    align-items: center;
+}
+
+.nav-item-main-icon { /* Class on the SVG element */
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    fill: currentColor; /* Inherits color from .nav-item */
+    flex-shrink: 0;
+}
+
+.nav-item-name { /* Span wrapping the module name text */
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.favorite-toggle-container {
+    margin-left: auto;  /* Push to the far right */
+    padding-left: 10px; /* Some space from the module name */
+    display: inline-flex;
+    align-items: center;
+}
+
+.nav-item-favorite-icon { /* Default state - outline */
+    width: 18px;
+    height: 18px;
+    fill: transparent;
+    stroke: currentColor; /* Use text color for the outline */
+    stroke-width: 1.5px;
+    cursor: pointer;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+}
+.nav-item-favorite-icon:hover {
+    stroke: gold; /* Outline hover color */
+    /* Or fill slightly: fill: rgba(255, 215, 0, 0.1); */
+}
+.favorite-toggle-container.is-favorite .nav-item-favorite-icon { /* Favorited state - filled */
+    fill: gold;
+    stroke: gold;
+}
+
+
 /* Styles for Navigator Title Heading and Icon */
 #left-navigator .main-nav-content h2#navigator-title-heading {
     display: flex;         /* Enable flexbox for alignment */

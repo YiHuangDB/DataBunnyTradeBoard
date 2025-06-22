@@ -2,6 +2,7 @@
   "name": "User Profile",
   "html_file": "profile_content.html",
   "js_file": "profile_script.js",
+  "itemIconSVG": "<svg class=\"nav-item-main-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\"></path></svg>",
   "categoryId": "cat_demo",
   "subcategoryId": null,
   "orderInCategory": 2

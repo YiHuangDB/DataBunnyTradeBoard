@@ -2,6 +2,7 @@
   "name": "Dashboard",
   "html_file": "dashboard_content.html",
   "js_file": "dashboard_script.js",
+  "itemIconSVG": "<svg class=\"nav-item-main-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M10 4H4c-1.11 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z\"></path></svg>",
   "categoryId": "cat_demo",
   "subcategoryId": null,
   "orderInCategory": 1
