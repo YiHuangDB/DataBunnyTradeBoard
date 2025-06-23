@@ -99,10 +99,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Adjust contentArea margin
         contentArea.style.marginLeft = isNowCollapsed ? COLLAPSED_NAV_WIDTH_PX : initialLeftNavWidthPx;
 
-        // If we just collapsed the navigator, ensure 'navigator-fully-hidden' is not present
         if (isNowCollapsed) {
-            leftNavigator.classList.remove('navigator-fully-hidden'); // Clean up, just in case
+            renderCollapsedFavoritesBar(); // Call when collapsing
+            leftNavigator.classList.remove('navigator-fully-hidden'); // Clean up, just in case (though this class is deprecated)
         }
+        // No need to call when expanding, as the bar will be hidden by CSS anyway.
     });
 
     const moduleConfigs = [
@@ -597,39 +598,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                 toggleFullscreenButton.title = "Exit Fullscreen";
 
                 // Ensure navigator is in the 'collapsed' (50px minimal bar) state
-                leftNavigator.classList.remove('navigator-fully-hidden'); // Remove if it was fully hidden
+                leftNavigator.classList.remove('navigator-fully-hidden'); // Remove if it was fully hidden (deprecated class)
                 leftNavigator.classList.add('navigator-collapsed');    // Add/ensure collapsed state for minimal bar
 
                 // Ensure content wrapper makes space for the minimal navigator
-                moduleContentWrapper.classList.remove('nav-is-fully-hidden');
+                moduleContentWrapper.classList.remove('nav-is-fully-hidden'); // deprecated class
 
-                // contentArea.style.overflow = 'hidden'; // Handled by CSS of .module-content-fullscreen
-                // Note: toggleNavBtn.title is no longer changed here.
+                contentArea.style.overflow = 'hidden'; // Recommended to keep for direct control during FS
+                renderCollapsedFavoritesBar(); // Call when collapsing due to fullscreen
 
             } else {
                 // ---- Exiting Fullscreen ----
                 toggleFullscreenButton.innerHTML = ICONS.FULLSCREEN_ENTER;
                 toggleFullscreenButton.title = "Enter Fullscreen";
 
-                // Remove fullscreen-specific effect on navigator if it was only due to FS.
-                // .navigator-collapsed is NOT necessarily removed here, as its state
-                // outside fullscreen is managed by toggleNavBtn.
-                // leftNavigator.classList.remove('navigator-collapsed'); // Decided against this, toggleNavBtn is source of truth for this class.
-                leftNavigator.classList.remove('navigator-fully-hidden'); // Ensure this is removed (safety)
+                // .navigator-collapsed state is NOT automatically removed here by toggleFullscreenButton.
+                // It depends on how it was before entering fullscreen (managed by toggleNavBtn).
+                leftNavigator.classList.remove('navigator-fully-hidden'); // Ensure this is removed (deprecated class safety)
+                moduleContentWrapper.classList.remove('nav-is-fully-hidden'); // Clean up (deprecated class)
 
-                // Remove fullscreen-specific classes from content wrapper
-                moduleContentWrapper.classList.remove('nav-is-fully-hidden'); // Clean up
-
-                // contentArea.style.overflow = 'auto'; // Handled by CSS when .module-content-fullscreen is removed
-
+                contentArea.style.overflow = 'auto'; // Recommended to keep for direct control
                 // Restore contentArea.style.marginLeft based on current navigator collapsed state
                 if (leftNavigator.classList.contains('navigator-collapsed')) {
                     contentArea.style.marginLeft = COLLAPSED_NAV_WIDTH_PX;
                 } else {
                     contentArea.style.marginLeft = initialLeftNavWidthPx;
                 }
-
-                // Note: toggleNavBtn.title is no longer changed here.
+                renderCollapsedFavoritesBar(); // Update fav bar based on current nav state
             }
         });
     } else {
