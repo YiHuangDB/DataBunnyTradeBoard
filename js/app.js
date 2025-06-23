@@ -42,7 +42,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const FAVORITES_STORAGE_KEY = 'navigatorFavorites';
 
-    function getFavorites() {
+    // Renamed: Reads directly from localStorage
+    function getFavoritesFromStorage() {
         const storedFavorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
         if (storedFavorites) {
             try {
@@ -50,35 +51,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return new Set(Array.isArray(favArray) ? favArray : []);
             } catch (e) {
                 console.error("Error parsing favorites from localStorage:", e);
-                return new Set(); // Return empty set on error
+                return new Set();
             }
         }
-        return new Set(); // No favorites stored yet
+        return new Set();
     }
 
-    function saveFavorites(favoritesSet) {
+    // Renamed: Saves directly to localStorage
+    function saveFavoritesToStorage(favoritesSet) {
         try {
             localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(Array.from(favoritesSet)));
         } catch (e) {
             console.error("Error saving favorites to localStorage:", e);
-            // Handle potential storage full errors or other issues if necessary
         }
     }
 
+    // Initialize the in-memory set ONCE at the start of DOMContentLoaded
+    let currentFavoritesSet = getFavoritesFromStorage();
+
     function isFavorite(moduleId) {
-        const favorites = getFavorites();
-        return favorites.has(moduleId);
+        return currentFavoritesSet.has(moduleId);
     }
 
     function toggleFavorite(moduleId) {
-        const favorites = getFavorites();
-        if (favorites.has(moduleId)) {
-            favorites.delete(moduleId);
+        if (currentFavoritesSet.has(moduleId)) {
+            currentFavoritesSet.delete(moduleId);
         } else {
-            favorites.add(moduleId);
+            currentFavoritesSet.add(moduleId);
         }
-        saveFavorites(favorites);
-        return favorites.has(moduleId); // Return new state
+        saveFavoritesToStorage(currentFavoritesSet); // Persist change
+        return currentFavoritesSet.has(moduleId); // Return new state from in-memory set
     }
 
     toggleNavBtn.addEventListener('click', () => {
@@ -479,14 +481,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         favoritesListContainer.innerHTML = ''; // Clear existing favorites
-        const favorites = getFavorites();
+        const favoritesToRender = currentFavoritesSet; // Use the in-memory set
 
-        if (favorites.size === 0) {
+        if (favoritesToRender.size === 0) {
             // favoritesListContainer.innerHTML = '<p class="no-favorites-message" style="font-size:10px; text-align:center; color:#bdc3c7;">No<br>favs</p>';
             return; // Keep it empty if no favorites
         }
 
-        favorites.forEach(moduleId => {
+        favoritesToRender.forEach(moduleId => { // Iterate the in-memory set
             const moduleData = navigatorConfig.moduleDataMap.get(moduleId);
             // Ensure module data and icon exist, and it's not a separator
             if (moduleData && moduleData.type !== "separator" && moduleData.itemIconSVG) {
