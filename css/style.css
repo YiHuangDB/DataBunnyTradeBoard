@@ -232,17 +232,34 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Styles for Nav Controls at the bottom of the navigator */
 #nav-controls {
-    position: absolute; /* Position relative to left-navigator */
-    bottom: 0;          /* At the bottom, changed from 10px to 0 for full attachment */
+    position: absolute;
+    bottom: 0;
     left: 0;
     width: 100%;
-    padding: 10px;      /* Padding inside the control bar */
+    padding: 10px;
     box-sizing: border-box;
     display: flex;
-    justify-content: space-around; /* Distribute buttons evenly */
-    background-color: #2c3e50; /* Match category headers or similar dark theme */
-    border-top: 1px solid #34495e; /* Separator line from list above */
+    justify-content: space-around;
+    background-color: #2c3e50;
+    border-top: 1px solid #34495e;
 }
+
+/* Overrides for #nav-controls when inside .navigator-collapsed */
+#left-navigator.navigator-collapsed #nav-controls {
+    position: static;
+    flex-direction: column;
+    align-items: center;
+    background-color: transparent;
+    padding: 0; /* General padding removed, specific spacing below */
+
+    width: 100%; /* Ensure it spans width for border-top */
+    border-top: 1px solid #4a6076; /* Separator line */
+    padding-top: 8px;  /* Space above controls, below separator */
+    margin-top: auto;  /* Pushes controls to bottom if fav list doesn't fill space */
+                       /* Changed from margin-top: 8px, now relies on flex layout */
+    flex-shrink: 0;    /* Prevent controls from shrinking */
+}
+
 
 #nav-controls button {
     background-color: transparent; /* Remove default button background */
@@ -275,9 +292,12 @@ h1, h2, h3, h4, h5, h6 {
 /* Styles for Collapsed (Minimal Icon Bar) Navigator State */
 #left-navigator.navigator-collapsed {
     width: 50px !important;
-    padding: 10px 0; /* Minimal padding for controls */
-    overflow: hidden;
-    background-color: #34495e; /* Keep original nav color or #2c3e50 if preferred */
+    padding: 10px 0; /* Vertical padding for the bar itself */
+    overflow: hidden !important; /* Ensure important if there are specific overflows elsewhere */
+    background-color: #2c3e50; /* Ensuring consistent background */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* Children like fav-list and nav-controls will stretch to full 50px width */
 }
 
 #left-navigator.navigator-collapsed .main-nav-content {
@@ -435,23 +455,25 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Styles for Collapsed Navigator Favorites List */
 #minimal-nav-favorites-list {
-    display: none; /* Hidden by default */
+    display: none; /* Hidden by default, shown when parent is .navigator-collapsed */
     flex-direction: column;
-    align-items: center;
-    padding: 10px 0; /* Padding above and below the list of favorites */
-    /* Calculate max-height: viewport minus title, search, controls, and some padding.
-       Approx: 100vh - (h2_height + search_height + nav-controls_height + various_paddings_margins)
-       Let's use a simpler approx. 100vh - 200px as a starting point, can be tuned.
-       Assuming h2 (~40px), search (~40px), controls (~50px), plus margins/paddings.
-    */
-    max-height: calc(100vh - 180px); /* Adjust this value based on actual surrounding element heights */
+    align-items: center; /* Centers favorite items horizontally */
+    justify-content: flex-start; /* Align items to the top, allow scrolling if overflow */
+                                 /* Changed from justify-content: center */
+    padding: 10px 0; /* Vertical padding for the list itself */
+    max-height: calc(100% - 70px); /* Approx height of nav-controls + its own padding + some buffer */
+                                   /* Max height relative to parent #left-navigator */
     overflow-y: auto;
     overflow-x: hidden;
-    scrollbar-width: thin; /* For Firefox */
+    scrollbar-width: thin;
+    width: 100%; /* Take full width of parent (50px bar) */
+    box-sizing: border-box;
+    flex-grow: 1; /* Allow this list to take available vertical space */
 }
 
 #left-navigator.navigator-collapsed #minimal-nav-favorites-list {
-    display: flex; /* Visible when navigator is collapsed */
+    display: flex; /* Make visible when navigator is collapsed */
+    /* flex-grow: 1; is now on the base style so it applies when display:flex */
 }
 
 .minimal-fav-item {
