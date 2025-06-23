@@ -458,24 +458,23 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 40px;  /* Button-like size */
-    height: 40px; /* Button-like size */
-    margin: 5px 0; /* Vertical margin between favorite items */
-    padding: 5px;
+    width: 28px;  /* Reduced width, slightly larger than icon for clickability */
+    height: 28px; /* Reduced height, slightly larger than icon for clickability */
+    margin: 5px 0; /* Vertical margin; parent #minimal-nav-favorites-list centers it horizontally */
     box-sizing: border-box;
-    border-radius: 4px; /* Rounded corners for the hover background */
     cursor: pointer;
-    background-color: transparent; /* New default: transparent background */
-    transition: background-color 0.2s ease;
-    color: #ecf0f1; /* Ensures icon color is light */
+    background-color: transparent; /* Explicitly transparent */
+    color: #ecf0f1; /* Base color for currentColor in SVG */
+    /* Removed padding, border-radius, and background-color transition from here */
 }
 
-.minimal-fav-item:hover {
-    background-color: #34495e; /* New hover: same as #nav-controls button:hover */
+.minimal-fav-item:hover svg { /* Target SVG on hover of its parent container */
+    fill: gold; /* Change icon fill color on hover */
 }
 
 .minimal-fav-item svg { /* Class on the SVG itemIcon itself is .nav-item-main-icon */
     width: 20px;
     height: 20px;
-    fill: currentColor; /* Inherits color from .minimal-fav-item text color */
+    fill: currentColor; /* Default fill using parent's color */
+    transition: fill 0.2s ease; /* Add transition for smooth color change */
 }
