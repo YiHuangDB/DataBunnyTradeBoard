@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         iconSVG: "",          // Default empty SVG string
         categories: [],
         subcategories: [],
-        moduleDataMap: new Map() // New property
+        moduleDataMap: new Map(),
+        defaultFavorites: [] // New property, initialized as empty array
     };
 
     // DOM Element references
@@ -67,7 +68,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Initialize the in-memory set ONCE at the start of DOMContentLoaded
-    let currentFavoritesSet = getFavoritesFromStorage();
+    // This initialization is now done *after* fetchNavigatorConfig completes.
+    // let currentFavoritesSet = getFavoritesFromStorage(); // Old position
 
     function isFavorite(moduleId) {
         return currentFavoritesSet.has(moduleId);
@@ -82,6 +84,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         saveFavoritesToStorage(currentFavoritesSet); // Persist change
         return currentFavoritesSet.has(moduleId); // Return new state from in-memory set
     }
+
+    // NOTE: fetchNavigatorConfig must be awaited before currentFavoritesSet is initialized with defaults.
+    // The call to fetchNavigatorConfig is further down, this reordering is conceptual for the diff.
+    // The actual change will be around the `await fetchNavigatorConfig()` and the line that initializes `currentFavoritesSet`.
+
+    // Placeholder for actual currentFavoritesSet initialization logic, which will be wrapped by the search block below.
+    // This is just to ensure the functions above are captured if they were directly above the old currentFavoritesSet init.
+    // The real change is in the block that starts "await fetchNavigatorConfig();"
 
     toggleNavBtn.addEventListener('click', () => {
         // If in fullscreen mode, this button should do nothing regarding navigator visibility.
@@ -122,15 +132,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await response.json();
 
             navigatorConfig.title = data.navigatorTitle || "Modules"; // Use default if not present
-            navigatorConfig.iconSVG = data.navigatorIconSVG || "";   // Use empty string if not present
+            navigatorConfig.iconSVG = data.navigatorIconSVG || "";
             navigatorConfig.categories = data.categories || [];
             navigatorConfig.subcategories = data.subcategories || [];
+            // Load defaultFavoriteModuleIds, ensure it's an array
+            if (data.defaultFavoriteModuleIds && Array.isArray(data.defaultFavoriteModuleIds)) {
+                navigatorConfig.defaultFavorites = data.defaultFavoriteModuleIds;
+            } else {
+                navigatorConfig.defaultFavorites = []; // Default to empty if not present or not an array
+            }
 
             // console.log('Navigator config loaded:', navigatorConfig);
         } catch (error) {
             console.error('Error fetching navigator config data (modules.json):', error);
-            // navigatorConfig will retain its default values
-            // (default title, empty iconSVG, empty categories/subcategories)
+            // navigatorConfig will retain its default values including defaultFavorites = []
         }
     }
 
@@ -352,6 +367,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initial loading sequence
     await fetchNavigatorConfig(); // Call renamed function
+
+    // Initialize currentFavoritesSet:
+    // 1. Try to load from localStorage
+    let currentFavoritesSet = getFavoritesFromStorage(); // This line is moved here and is key
+
+    // 2. If localStorage is empty AND default favorites are defined in config, use defaults
+    if (currentFavoritesSet.size === 0 &&
+        navigatorConfig.defaultFavorites &&
+        Array.isArray(navigatorConfig.defaultFavorites) &&
+        navigatorConfig.defaultFavorites.length > 0) {
+
+        // console.log("No user favorites found in localStorage. Applying defaults from modules.json:", navigatorConfig.defaultFavorites);
+        currentFavoritesSet = new Set(navigatorConfig.defaultFavorites);
+        saveFavoritesToStorage(currentFavoritesSet); // Persist these defaults to localStorage
+    }
+    // else if (currentFavoritesSet.size > 0) {
+        // console.log("Loaded user favorites from localStorage:", currentFavoritesSet);
+    // } else {
+        // console.log("No user favorites in localStorage and no defaults provided in modules.json.");
+    // }
+
 
     // Get reference to the title heading element
     const navigatorTitleHeading = document.getElementById('navigator-title-heading');
