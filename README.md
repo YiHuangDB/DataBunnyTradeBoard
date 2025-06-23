@@ -18,6 +18,11 @@ A lightweight, front-end web framework designed for building applications with a
 *   **Simple Configuration:** Uses JSON files for module and category setup.
 *   **Vanilla JS:** Built with plain HTML, CSS, and JavaScript; no external libraries required for core functionality.
 
+## Live Demo
+
+You can try out a live version of this framework here:
+[Dynamic Modular Web Framework Demo](https://yihuangdb.github.io/DynamicModularWebFramework/)
+
 ## Project Structure
 
 ```
