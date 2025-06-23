@@ -2,7 +2,7 @@
   "name": "Dashboard",
   "html_file": "dashboard_content.html",
   "js_file": "dashboard_script.js",
-  "itemIconSVG": "<svg class=\"nav-item-main-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M10 4H4c-1.11 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z\"></path></svg>",
+  "itemIconSVG": "<svg class=\"nav-item-main-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M13 9V3h8v6h-8zm0 12v-6h8v6h-8zM3 21v-6h8v6H3zm0-8V7h8v6H3z\"></path></svg>",
   "categoryId": "cat_demo",
   "subcategoryId": null,
   "orderInCategory": 1
