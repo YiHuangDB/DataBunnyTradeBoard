@@ -458,14 +458,15 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 28px;  /* Reduced width, slightly larger than icon for clickability */
-    height: 28px; /* Reduced height, slightly larger than icon for clickability */
-    margin: 5px 0; /* Vertical margin; parent #minimal-nav-favorites-list centers it horizontally */
+    width: 20px;  /* Match SVG width */
+    height: 20px; /* Match SVG height */
+    margin: 8px 0; /* Increased vertical margin, centering handled by parent's align-items: center */
     box-sizing: border-box;
     cursor: pointer;
-    background-color: transparent; /* Explicitly transparent */
-    color: #ecf0f1; /* Base color for currentColor in SVG */
-    /* Removed padding, border-radius, and background-color transition from here */
+    background-color: transparent;
+    color: #ecf0f1;
+    border: none; /* Explicitly remove border */
+    padding: 0;   /* Explicitly remove padding */
 }
 
 .minimal-fav-item:hover svg { /* Target SVG on hover of its parent container */
@@ -473,7 +474,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .minimal-fav-item svg { /* Class on the SVG itemIcon itself is .nav-item-main-icon */
-    width: 20px;
+    width: 20px;  /* SVG is already this size */
     height: 20px;
     fill: currentColor; /* Default fill using parent's color */
     transition: fill 0.2s ease; /* Add transition for smooth color change */
